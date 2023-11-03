@@ -1,0 +1,9 @@
+# zzz
+**/nocommit/*
+**.nocommit
+.vim/*
+pyrightconfig.json
+coc-config.json
+*.py.*.py
+.python-version
+**artifacts**
