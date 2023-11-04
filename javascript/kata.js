@@ -3,6 +3,11 @@
  * Author: Zach Waite
  *
  * Developed on nodejs 20.4.0, should work on >19.x
+ *
+ *
+ * Go to the bottom of the file for instructions
+ *
+ *
  */
 
 // Boilerplate needed to connect to Odoo's JSON-RPC API :(
