@@ -3,7 +3,6 @@ import os
 import random
 import urllib.request
 
-
 def load_config():
     return {
         "HOST": os.environ.get("ODOO_HOST"),
@@ -13,7 +12,6 @@ def load_config():
         "LOGIN": os.environ.get("ODOO_LOGIN"),
         "PASSWORD": os.environ.get("ODOO_PASSWORD"),
     }
-
 
 def json_rpc(url, method, params):
     data = {
@@ -34,10 +32,8 @@ def json_rpc(url, method, params):
         raise Exception(reply["error"])
     return reply["result"]
 
-
 def call(url, service, method, *args):
     return json_rpc(url, "call", {"service": service, "method": method, "args": args})
-
 
 class OdooSession:
     def __init__(self, host, port, protocol, db, user, password):
@@ -71,6 +67,23 @@ class OdooSession:
     def get_all_employees(self):
         return self.search_read("hr.employee", [], ["name", "job_title"])
 
+    def get_all_job_titles(self):
+        return self.search_read("hr.employee", [], ["job_title"])
+
+    def get_job_title_count(self):
+        job_titles = odoo.get_all_job_titles()
+        title_count = {}
+        for employee in job_titles:
+            title = employee.get("job_title")
+            if not title: continue
+
+            if title in title_count:
+                title_count[title] += 1
+                continue
+            
+            title_count[title] = 1
+                
+        return title_count
 
 if __name__ == "__main__":
     # Example: Connect to the remote server, query all the employees and print 2 records
@@ -84,8 +97,15 @@ if __name__ == "__main__":
         config["PASSWORD"],
     )
     odoo.login()
-    all_employees = odoo.get_all_employees()
-    print(all_employees[:2])
+    job_title_count = odoo.get_job_title_count()
+
+    def as_count(item):
+        return item[1]
+    
+    job_titles_sorted = sorted(job_title_count.items(), key=as_count, reverse=True)
+    
+    for title, count in job_titles_sorted:
+        print(f"{title}, ({count})")    
 
 # TODO: Connect to the remote Odoo server and query the number of unique job titles,
 # then print them out in order of most common to least common.
