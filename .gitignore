@@ -7,3 +7,5 @@ coc-config.json
 *.py.*.py
 .python-version
 **artifacts**
+node_modules
+.env
