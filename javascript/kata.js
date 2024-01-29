@@ -10,6 +10,9 @@
  *
  */
 
+// Get the environment variables
+require('dotenv').config();
+
 // Boilerplate needed to connect to Odoo's JSON-RPC API :(
 const loadConfig = () => {
   return {
@@ -101,7 +104,25 @@ const OdooSessionMaker = (host, port, protocol, db, user, password) => {
   )();
   await odoo.login();
   const allEmployees = await odoo.getAllEmployees();
-  console.log(allEmployees.result.slice(0, 2));
+
+  // Convert all employees to an array so we can do pre-processing
+  const allEmployeesToArray = (await Promise.all(allEmployees.result));
+  
+  // Process the array, get overall counts
+  const getJobTitleCount = allEmployeesToArray.reduce((getJobTitleCount, employees) =>
+  {
+    getJobTitleCount[employees.job_title] = (getJobTitleCount[employees.job_title] || 0) + 1;
+    return getJobTitleCount;
+  }, {});
+
+  // Sort the array from most common to least common
+  const sortedTitles = Object.entries(getJobTitleCount).sort((p0, p1) =>
+  {
+    return p0[1] < p1[1] ? 1 : -1;
+  });
+
+  // Print list out in sorted order (common - unCommon)
+  sortedTitles.forEach((sortedElement) => console.log(sortedElement[0]));
 })();
 
 /**
