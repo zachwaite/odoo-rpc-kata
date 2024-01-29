@@ -3,6 +3,17 @@ import os
 import random
 import urllib.request
 
+# easier to ready json formatting output, since indent=4 from json.dumps isn't working
+import pprint
+
+# calvin: don't need a bash script to add envi variables since we're using "os" in this python script
+# though of course, we don't want to add our login creds to a github repo
+os.environ['ODOO_HOST'] = "demo-telescopecasual.odoo.com"
+os.environ['ODOO_PORT'] = '443'
+os.environ['ODOO_PROTOCOL'] = "https"
+os.environ['ODOO_DB'] = "demo-telescopecasual"
+os.environ['ODOO_LOGIN'] = "exampleemail"
+os.environ['ODOO_PASSWORD'] = "examplepassword"
 
 def load_config():
     return {
@@ -22,6 +33,7 @@ def json_rpc(url, method, params):
         "params": params,
         "id": random.randint(0, 1000000000),
     }
+    
     req = urllib.request.Request(
         url=url,
         data=json.dumps(data).encode(),
@@ -42,6 +54,7 @@ def call(url, service, method, *args):
 class OdooSession:
     def __init__(self, host, port, protocol, db, user, password):
         self.URL = f"{protocol}://{host}:{port}/jsonrpc"
+        print("URL:", self.URL)
         self.DB = db
         self.LOGIN = user
         self.PASSWORD = password
@@ -69,7 +82,22 @@ class OdooSession:
         )
 
     def get_all_employees(self):
-        return self.search_read("hr.employee", [], ["name", "job_title"])
+        return self.search_read("hr.employee", [], ["name", "job_title"])    
+    
+    def get_job_titles(self):
+        return self.search_read("hr.employee", [], ["job_title"])
+    
+    def count_job_titles(self):
+        get_job_titles = odoo.get_job_titles()
+        job_title_count = {}
+        for employee in get_job_titles:
+            job_title = employee.get("job_title")
+            if job_title:
+                if job_title in job_title_count:
+                    job_title_count[job_title] += 1
+                else:
+                    job_title_count[job_title] = 1
+        return job_title_count
 
 
 if __name__ == "__main__":
@@ -84,11 +112,29 @@ if __name__ == "__main__":
         config["PASSWORD"],
     )
     odoo.login()
-    all_employees = odoo.get_all_employees()
-    print(all_employees[:2])
+    # all_employees = odoo.get_all_employees()
+    # jobtitles = odoo.get_job_titles()
+    # show_model = odoo.show_model("hr.employee")
+    # pprint.pprint(show_model)
+    
+    job_title_count = odoo.count_job_titles()
+    # pprint.pprint(job_title_count)         
+        
+    # get count / for number of times a job title appears
+    def get_count(item):
+        return item[1]
 
-# TODO: Connect to the remote Odoo server and query the number of unique job titles,
-# then print them out in order of most common to least common.
+    # dictionary sort
+    sorted_job_titles = dict(sorted(job_title_count.items(), key=get_count, reverse=True))
+
+    # print by count
+    for job_title, count in sorted_job_titles.items():
+        pprint.pprint(f"Telescope has ({count}), {job_title}")        
+
+# TODO:
+# 1. Connect to the remote Odoo server 
+# 2. # and query the number of unique job titles,
+# 3. then print them out in order of most common to least common.
 #
 # You may use the boilerplate above or roll your own. If you feel like some light
 # reading here are some links, but don't worry, there isn't a quiz :)
